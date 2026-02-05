@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Planet Books | Official Site</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="https://rohansweb-codexamples.github.io/Panda-Planet-Books/logo.jpg">
+    <link rel="shortcut icon" href="https://rohansweb-codexamples.github.io/Panda-Planet-Books/logo.jpg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .panda-gradient { background: linear-gradient(135deg, #1a1c1e 0%, #000000 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .hidden-section { display: none !important; }
+        .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); }
+        .utility-bar { background: #0f172a; color: rgba(255,255,255,0.7); font-size: 0.75rem; }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(16, 185, 129, 0.1);
+            border-left-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-load 1.5s infinite; }
+        @keyframes skeleton-load { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .status-online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-warning { background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .status-offline { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Loading Bar -->
+    <div id="loading-bar" class="fixed top-0 left-0 w-0 h-1 bg-emerald-500 z-[100] transition-all duration-500"></div>
+
+    <!-- Top Utility Bar -->
+    <div class="utility-bar py-2 px-4 sm:px-8 flex justify-between items-center z-[60] relative">
+        <div class="flex items-center gap-4">
+            <span id="api-status" class="flex items-center">
+                <span id="status-dot" class="status-dot status-warning animate-pulse"></span>
+                <span id="status-text">Cloud: Initializing...</span>
+            </span>
+        </div>
+        <div id="auth-controls" class="flex items-center gap-4">
+            <div id="top-auth-state">
+                <button onclick="openLoginModal('admin')" class="hover:text-white transition-colors mr-4">Admin</button>
+                <button onclick="openLoginModal('user')" class="hover:text-white transition-colors">Sign In</button>
+            </div>
+            <div id="top-user-state" class="hidden flex items-center gap-3">
+                <span id="welcome-text" class="text-emerald-400 font-medium"></span>
+                <button onclick="logout()" class="hover:text-red-400 transition-colors">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 flex justify-between h-20 items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+                <div class="bg-slate-900 text-white p-2.5 rounded-xl">
+                    <i class="fas fa-panda fa-xl text-emerald-400"></i>
+                </div>
+                <div class="font-black tracking-tighter text-xl uppercase">Panda Planet</div>
+            </div>
+
+            <div class="hidden md:flex space-x-8 font-bold items-center">
+                <button onclick="navigateTo('home')" class="hover:text-emerald-500">Home</button>
+                <button onclick="navigateTo('shop')" class="hover:text-emerald-500">Shop</button>
+                <button onclick="navigateTo('team')" class="hover:text-emerald-500">Team</button>
+                <div id="dashboard-btn-container" class="hidden">
+                    <button onclick="navigateTo('admin')" class="bg-emerald-500 text-white px-5 py-2 rounded-xl text-sm shadow-lg shadow-emerald-500/20">Dashboard</button>
+                </div>
+                <button class="relative text-slate-700 hover:text-emerald-500 transition-colors" onclick="openCart()">
+                    <i class="fas fa-shopping-cart text-lg"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Home Section -->
+        <section id="page-home" class="page-section">
+            <div class="panda-gradient py-40 px-4 text-center text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <h1 class="text-7xl font-black mb-6 tracking-tighter">Panda Planet <span class="text-emerald-400">Books</span></h1>
+                    <p class="text-slate-400 text-2xl mb-12 max-w-2xl mx-auto font-medium">Creative journals and writer books for the next generation of authors.</p>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button onclick="navigateTo('shop')" class="bg-emerald-500 hover:bg-emerald-400 text-white px-12 py-5 rounded-2xl font-black text-lg transition-all shadow-2xl shadow-emerald-500/30">Browse Shop</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Shop Section -->
+        <section id="page-shop" class="page-section hidden-section py-20 px-4 max-w-7xl mx-auto">
+            <div class="flex justify-between items-end mb-16">
+                <div>
+                    <h2 class="text-5xl font-black mb-4">The Bookstore</h2>
+                    <p class="text-slate-500 font-medium">Select your next creative companion.</p>
+                </div>
+            </div>
+            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[400px]">
+                <div class="glass-card p-10 rounded-[2.5rem] h-96 skeleton"></div>
+                <div class="glass-card p-10 rounded-[2.5rem] h-96 skeleton"></div>
+                <div class="glass-card p-10 rounded-[2.5rem] h-96 skeleton"></div>
+            </div>
+        </section>
+
+        <!-- Team Section -->
+        <section id="page-team" class="page-section hidden-section py-24 px-4 bg-white">
+            <div class="max-w-7xl mx-auto text-center">
+                <h2 class="text-5xl font-black mb-20">Our Team</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div><h3 class="text-2xl font-black">Rosie H</h3><p class="text-emerald-500 font-bold uppercase tracking-widest text-xs mt-2">Co-Founder</p></div>
+                    <div><h3 class="text-2xl font-black">Emilia B</h3><p class="text-emerald-500 font-bold uppercase tracking-widest text-xs mt-2">Design Lead</p></div>
+                    <div><h3 class="text-2xl font-black">Rohan W</h3><p class="text-emerald-500 font-bold uppercase tracking-widest text-xs mt-2">Operations</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="page-admin" class="page-section hidden-section flex min-h-screen bg-slate-100">
+            <aside class="w-72 bg-[#0f172a] p-8 text-white flex flex-col">
+                 <div class="flex items-center gap-3 mb-12">
+                    <div class="bg-emerald-500 p-2 rounded-lg text-white"><i class="fas fa-shield-alt"></i></div>
+                    <span class="font-black text-xl uppercase">Admin</span>
+                </div>
+                <nav class="space-y-4 flex-1">
+                    <button onclick="switchAdminTab('orders')" id="tab-orders" class="w-full text-left px-4 py-3 rounded-xl font-bold bg-emerald-500">View Orders</button>
+                    <button onclick="switchAdminTab('products')" id="tab-products" class="w-full text-left px-4 py-3 rounded-xl font-bold text-slate-400 hover:text-white">Inventory</button>
+                    <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl font-bold text-red-400 mt-20">Sign Out</button>
+                </nav>
+            </aside>
+            <main class="flex-1 p-12">
+                <div id="admin-view-orders" class="admin-tab-view">
+                    <h2 class="text-4xl font-black mb-10">Customer Orders</h2>
+                    <div class="bg-white rounded-3xl shadow-xl overflow-hidden overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <tr><th class="p-6">User</th><th class="p-6">Items</th><th class="p-6">Total</th><th class="p-6">Status</th></tr>
+                            </thead>
+                            <tbody id="order-list" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="admin-view-products" class="admin-tab-view hidden">
+                    <h2 class="text-4xl font-black mb-10">Manage Products</h2>
+                    <div id="admin-product-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+            </main>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="login-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative">
+            <button onclick="closeLoginModal()" class="absolute top-8 right-8 text-slate-300 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            <h2 id="modal-title" class="text-3xl font-black mb-2">Sign In</h2>
+            <p class="text-slate-400 text-sm mb-6">Access your Panda Planet account</p>
+            
+            <div id="login-server-status" class="mb-6 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
+                <div class="spinner !w-4 !h-4"></div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cloud: Waiting for handshake...</span>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="Email address" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none transition-all">
+                <input type="password" id="auth-password" placeholder="Password" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-emerald-500 outline-none transition-all">
+                <button type="submit" id="auth-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2">
+                    <span>Connect</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="cart-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-lg rounded-[3rem] p-10 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-black">Shopping Cart</h2>
+                <button onclick="closeCart()" class="text-slate-400"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="cart-items" class="space-y-4 mb-10 max-h-[40vh] overflow-y-auto pr-2"></div>
+            <div id="cart-footer" class="border-t pt-6">
+                <div class="flex justify-between mb-8">
+                    <span class="font-bold text-slate-400">Total</span>
+                    <span id="cart-total" class="font-black text-2xl">$0.00</span>
+                </div>
+                <button onclick="checkout()" id="checkout-btn" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-3">
+                    Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl opacity-0 transition-all z-[120] font-bold pointer-events-none text-center min-w-[300px]"></div>
+
+    <script>
+        const MAIN_API = "https://pandabooksrender.onrender.com";
+        const PRODUCTS_API = "https://pandaplanetboksrenderproducts.onrender.com";
+
+        let currentUser = JSON.parse(localStorage.getItem('panda_user')) || null;
+        let cart = JSON.parse(localStorage.getItem('panda_cart')) || [];
+        let cachedProducts = JSON.parse(localStorage.getItem('panda_cached_products')) || [];
+        let isMainServerAwake = false;
+
+        function setProgress(percent) {
+            document.getElementById('loading-bar').style.width = percent + '%';
+            if(percent >= 100) setTimeout(() => document.getElementById('loading-bar').style.width = '0', 500);
+        }
+
+        function updateGlobalStatus(isOnline, message) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const modalStatus = document.getElementById('login-server-status');
+
+            if (isOnline) {
+                isMainServerAwake = true;
+                dot.className = "status-dot status-online";
+                text.innerText = "Cloud: Online";
+                if(modalStatus) modalStatus.innerHTML = `<i class="fas fa-check-circle text-emerald-500"></i> <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Cloud Ready</span>`;
+            } else {
+                dot.className = "status-dot status-warning animate-pulse";
+                text.innerText = message || "Cloud: Waking Up...";
+                if(modalStatus) modalStatus.innerHTML = `<div class="spinner !w-4 !h-4"></div> <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Waking Server (30-60s)...</span>`;
+            }
+        }
+
+        // IMPROVED API CALL: Pre-warming Logic
+        async function api(baseUrl, path, method = 'GET', body = null, retries = 2) {
+            const options = { 
+                method, 
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            
+            try {
+                const res = await fetch(`${baseUrl}${path}`, options);
+                if (!res.ok) throw new Error("Status: " + res.status);
+                
+                if (baseUrl === MAIN_API) updateGlobalStatus(true);
+                return await res.json();
+            } catch (err) {
+                if (baseUrl === MAIN_API) updateGlobalStatus(false);
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, 4000));
+                    return api(baseUrl, path, method, body, retries - 1);
+                }
+                return { error: true, message: err.message };
+            }
+        }
+
+        // Warm up main server immediately on page load
+        async function warmUpMainServer() {
+            console.log("Pre-warming Main API...");
+            await api(MAIN_API, '/orders'); // Simple ping
+        }
+
+        async function fetchProducts() {
+            const grid = document.getElementById('product-grid');
+            if (cachedProducts.length > 0) renderProductGrid(cachedProducts);
+            
+            setProgress(40);
+            const data = await api(PRODUCTS_API, '/products');
+            setProgress(100);
+
+            if (Array.isArray(data) && data.length > 0) {
+                cachedProducts = data;
+                localStorage.setItem('panda_cached_products', JSON.stringify(data));
+                renderProductGrid(data);
+            } else if (cachedProducts.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400">Inventory server is starting up. This may take up to 60 seconds...</div>`;
+                setTimeout(fetchProducts, 8000);
+            }
+        }
+
+        function renderProductGrid(items) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = items.map(p => `
+                <div class="glass-card p-10 rounded-[2.5rem] flex flex-col hover:-translate-y-2 transition-all group">
+                    <div class="w-full aspect-[4/5] bg-slate-100 rounded-3xl mb-8 flex items-center justify-center text-slate-300 group-hover:bg-emerald-50 transition-colors">
+                        <i class="fas fa-book-open text-6xl group-hover:text-emerald-200"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2">${p.title}</h3>
+                    <p class="text-slate-500 text-sm mb-6 flex-1">${p.description || 'Exclusive Panda Planet Writer Book'}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-black">$${(p.price || 0).toFixed(2)}</span>
+                        <button onclick="addToCart('${p.title}', ${p.price})" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-500 transition-colors">Add to Cart</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('auth-btn');
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner"></div> <span>Waking Cloud...</span>`;
+
+            if (email === 'admin@panda.com' && password === 'Admin@123') {
+                currentUser = { name: 'Admin', email, role: 'admin' };
+            } else {
+                const res = await api(MAIN_API, '/login', 'POST', { email, password }, 0); // 0 retries here to avoid double-waiting
+                if (!res.error && res.user) {
+                    currentUser = res.user;
+                } else {
+                    showToast("Server is still waking up. Please wait for the 'Cloud Ready' icon.", true);
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Connect</span>`;
+                    return;
+                }
+            }
+
+            localStorage.setItem('panda_user', JSON.stringify(currentUser));
+            updateUI();
+            closeLoginModal();
+            showToast("Success! Cloud Session Established.");
+            if(currentUser.role === 'admin') navigateTo('admin');
+            btn.disabled = false;
+            btn.innerHTML = `<span>Connect</span>`;
+        });
+
+        async function checkout() {
+            if (!currentUser) { 
+                closeCart(); 
+                showToast("Please sign in to order.");
+                return openLoginModal('user'); 
+            }
+            if (!cart.length) return;
+            
+            const btn = document.getElementById('checkout-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner"></div> Submitting...`;
+            
+            const res = await api(MAIN_API, '/orders', 'POST', {
+                user: currentUser.email,
+                items: cart.map(i => i.name).join(', '),
+                total: cart.reduce((a,b) => a+b.price, 0)
+            }, 0);
+            
+            btn.disabled = false;
+            btn.innerHTML = `Confirm Order`;
+
+            if (!res.error) {
+                showToast("Order Successful! Panda books on the way.");
+                cart = [];
+                localStorage.removeItem('panda_cart');
+                updateUI();
+                closeCart();
+            } else {
+                showToast("Order failed. Server is currently waking up.", true);
+            }
+        }
+
+        function navigateTo(id) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden-section'));
+            document.getElementById('page-' + id).classList.remove('hidden-section');
+            if(id === 'shop') fetchProducts();
+            if(id === 'admin') fetchOrders();
+            window.scrollTo(0,0);
+        }
+
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-tab-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`admin-view-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('aside nav button').forEach(b => b.classList.remove('bg-emerald-500'));
+            document.getElementById(`tab-${tab}`).classList.add('bg-emerald-500');
+        }
+
+        async function fetchOrders() {
+            const list = document.getElementById('order-list');
+            list.innerHTML = '<tr><td colspan="4" class="p-10 text-center"><div class="spinner"></div></td></tr>';
+            const data = await api(MAIN_API, '/orders');
+            if (!Array.isArray(data)) {
+                list.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400">Cloud is waking up. Refreshing...</td></tr>';
+                setTimeout(fetchOrders, 5000);
+                return;
+            }
+            list.innerHTML = data.map(o => `
+                <tr>
+                    <td class="p-6 font-bold text-sm">${o.user}</td>
+                    <td class="p-6 text-slate-500 text-sm">${o.items}</td>
+                    <td class="p-6 font-black text-emerald-600">$${(o.total || 0).toFixed(2)}</td>
+                    <td class="p-6"><span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">Confirmed</span></td>
+                </tr>`).join('');
+        }
+
+        function updateUI() {
+            const loggedIn = !!currentUser;
+            document.getElementById('top-auth-state').classList.toggle('hidden', loggedIn);
+            document.getElementById('top-user-state').classList.toggle('hidden', !loggedIn);
+            if (loggedIn) document.getElementById('welcome-text').innerText = currentUser.name;
+            document.getElementById('dashboard-btn-container').classList.toggle('hidden', !loggedIn || currentUser.role !== 'admin');
+            document.getElementById('cart-count').innerText = cart.length;
+        }
+
+        function addToCart(name, price) {
+            cart.push({name, price});
+            localStorage.setItem('panda_cart', JSON.stringify(cart));
+            updateUI();
+            showToast("Added to Cart");
+        }
+
+        function openCart() {
+            const items = document.getElementById('cart-items');
+            items.innerHTML = cart.length ? cart.map((i, idx) => `
+                <div class="flex justify-between bg-slate-50 p-4 rounded-2xl">
+                    <div><p class="font-black text-sm">${i.name}</p><p class="text-xs text-slate-400">$${i.price}</p></div>
+                    <button onclick="removeFromCart(${idx})" class="text-slate-300 hover:text-red-400"><i class="fas fa-trash"></i></button>
+                </div>`).join('') : '<p class="text-center text-slate-400 py-10">Cart is empty</p>';
+            document.getElementById('cart-total').innerText = `$${cart.reduce((a,b) => a+b.price, 0).toFixed(2)}`;
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            localStorage.setItem('panda_cart', JSON.stringify(cart));
+            updateUI(); openCart();
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `fixed bottom-8 left-1/2 -translate-x-1/2 text-white px-8 py-4 rounded-full shadow-2xl transition-all z-[120] font-bold pointer-events-none text-center min-w-[300px] opacity-100 ${isError ? 'bg-red-600' : 'bg-slate-900'}`;
+            setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 4000);
+        }
+
+        function openLoginModal(type) { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+        function closeCart() { document.getElementById('cart-modal').classList.add('hidden'); }
+        function logout() { currentUser = null; localStorage.removeItem('panda_user'); updateUI(); navigateTo('home'); }
+
+        window.onload = () => {
+            updateUI();
+            setProgress(10);
+            fetchProducts(); 
+            warmUpMainServer(); 
+        };
+    </script>
+</body>
+</html>
