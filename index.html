@@ -36,21 +36,15 @@
             border: 1px solid var(--border-color);
         }
 
-        .plant-float {
-            animation: float 5s ease-in-out infinite;
-        }
-
+        .plant-float { animation: float 5s ease-in-out infinite; }
         @keyframes float {
             0%, 100% { transform: translateY(0px) scale(1); }
             50% { transform: translateY(-15px) scale(1.03); }
         }
 
-        .tab-active {
-            border-bottom: 3px solid #16a34a;
-            color: #16a34a;
-        }
+        .tab-active { border-bottom: 3px solid #16a34a; color: #16a34a; }
 
-        /* Immersion Backgrounds */
+        /* Environments */
         .bg-desert { background: linear-gradient(#fde68a, #f59e0b) !important; }
         .bg-forest { background: linear-gradient(#059669, #064e3b) !important; }
         .bg-space { background: #0f172a radial-gradient(white 1px, transparent 0px) !important; background-size: 30px 30px !important; }
@@ -58,6 +52,8 @@
         .bg-sunset { background: linear-gradient(#fb7185, #f43f5e, #9f1239) !important; }
         .bg-ocean { background: linear-gradient(#0ea5e9, #1e40af) !important; }
         .bg-cyber { background: #000; background-image: linear-gradient(rgba(0,255,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,0,0.1) 1px, transparent 1px); background-size: 20px 20px; }
+        .bg-solar { background: radial-gradient(circle, #fcd34d, #f59e0b, #78350f) !important; }
+        .bg-glitch { background: #111; background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,0,255,0.1) 1px, rgba(255,0,255,0.1) 2px); }
 
         .bg-item-emoji {
             position: absolute;
@@ -73,18 +69,6 @@
 
         .accessory-hat { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); font-size: 3.8rem; z-index: 20; }
         
-        .owned-badge {
-            font-size: 0.6rem;
-            background: #dcfce7;
-            color: #166534;
-            padding: 2px 8px;
-            border-radius: 99px;
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-weight: 800;
-        }
-
         .equipped-ring {
             border: 3px solid #16a34a !important;
             transform: scale(1.02);
@@ -95,23 +79,66 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 10px; }
 
         .btn-primary {
-            @apply bg-green-600 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:bg-green-700 transition-all active:scale-95;
+            @apply bg-green-600 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:bg-green-700 transition-all active:scale-95 disabled:opacity-50;
         }
 
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
+
+        .music-player-ui {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .track-item {
+            @apply flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 border-transparent transition-all;
+        }
+        .track-item.active {
+            @apply border-green-500 bg-green-50/50 dark:bg-green-900/20;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen">
+
+    <!-- Start Overlay -->
+    <div id="start-overlay" class="modal-overlay">
+        <div class="text-center p-12 glass-card rounded-[3rem] border-2 border-green-500/20 max-w-sm">
+            <div class="text-7xl mb-6">🌱</div>
+            <h2 class="text-3xl font-black mb-4">FloraLab</h2>
+            <p class="text-slate-500 font-bold mb-8">Tap to enter your garden and start the botanical soundscape.</p>
+            <button onclick="initApp()" class="btn-primary w-full py-5 text-lg">ENTER GARDEN</button>
+        </div>
+    </div>
+
+    <!-- Hidden Global Audio Element -->
+    <audio id="global-audio" loop preload="auto"></audio>
 
     <!-- Header -->
     <nav class="glass-card sticky top-0 z-50 px-6 py-4 border-b">
@@ -121,6 +148,10 @@
                 <h1 class="font-black text-xl tracking-tight uppercase">FloraLab</h1>
             </div>
             <div class="flex items-center gap-4">
+                <button onclick="toggleGlobalMusic()" class="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 transition-colors flex items-center gap-2">
+                    <span id="music-status-icon">🔇</span>
+                    <span class="text-[10px] font-black uppercase hidden sm:inline">Music</span>
+                </button>
                 <button onclick="toggleTheme()" class="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 transition-colors">
                     <span id="theme-icon">🌙</span>
                 </button>
@@ -128,7 +159,6 @@
                     <span id="total-score">0</span>
                     <span class="text-[10px] opacity-70">GP</span>
                 </div>
-                <button onclick="resetGame()" class="text-[10px] opacity-30 hover:opacity-100 font-bold uppercase transition-opacity">Reset All</button>
             </div>
         </div>
     </nav>
@@ -136,9 +166,10 @@
     <main class="max-w-6xl mx-auto p-6">
         
         <div class="flex gap-6 md:gap-10 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap scrollbar-hide">
-            <button onclick="switchTab('care')" id="tab-care" class="pb-4 font-black text-sm tracking-widest transition-all tab-active">MY GARDEN</button>
-            <button onclick="switchTab('quiz')" id="tab-quiz" class="pb-4 font-black text-sm tracking-widest transition-all text-slate-400">CHALLENGES</button>
-            <button onclick="switchTab('discovery')" id="tab-discovery" class="pb-4 font-black text-sm tracking-widest transition-all text-slate-400">DISCOVERY</button>
+            <button onclick="switchTab('care')" id="tab-care" class="pb-4 font-black text-sm tracking-widest transition-all tab-active uppercase">My Garden</button>
+            <button onclick="switchTab('quiz')" id="tab-quiz" class="pb-4 font-black text-sm tracking-widest transition-all text-slate-400 uppercase">Challenges</button>
+            <button onclick="switchTab('discovery')" id="tab-discovery" class="pb-4 font-black text-sm tracking-widest transition-all text-slate-400 uppercase">Discovery</button>
+            <button onclick="switchTab('music')" id="tab-music" class="pb-4 font-black text-sm tracking-widest transition-all text-slate-400 uppercase">Studio</button>
         </div>
 
         <!-- Care Section -->
@@ -146,12 +177,10 @@
             <div class="lg:col-span-5">
                 <div id="plant-display-area" class="rounded-[3.5rem] p-12 text-center relative overflow-hidden h-[580px] flex flex-col justify-center items-center shadow-2xl transition-all duration-700">
                     <div id="bg-emoji-overlay" class="bg-item-emoji"></div>
-                    
                     <div class="relative z-10">
                         <span id="equipped-hat" class="accessory-hat"></span>
                         <div id="plant-stage" class="text-[11rem] plant-float drop-shadow-2xl">🌱</div>
                     </div>
-
                     <div class="mt-auto w-full z-10 bg-black/40 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/20">
                         <div class="flex justify-between text-[11px] font-black uppercase tracking-widest text-white mb-2">
                             <span id="growth-label">Seedling</span>
@@ -167,16 +196,11 @@
                     </div>
                 </div>
             </div>
-
             <div class="lg:col-span-7">
                 <div class="glass-card rounded-[3.5rem] p-8 h-[580px] flex flex-col">
                     <div class="flex justify-between items-center mb-8">
                         <h2 class="text-2xl font-black italic uppercase">Boutique</h2>
-                        <div class="flex gap-2">
-                            <button onclick="filterShop('all')" class="text-[10px] font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">ALL</button>
-                            <button onclick="filterShop('hat')" class="text-[10px] font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">HATS</button>
-                            <button onclick="filterShop('bg')" class="text-[10px] font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">ENVS</button>
-                        </div>
+                        <span class="text-[10px] font-black opacity-40 uppercase tracking-widest" id="item-count">15 Items Available</span>
                     </div>
                     <div id="shop-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto pr-2 custom-scroll flex-1"></div>
                 </div>
@@ -185,405 +209,382 @@
 
         <!-- Quiz Section -->
         <section id="section-quiz" class="hidden space-y-8">
-            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h2 class="text-3xl font-black mb-1">Botanical Challenges</h2>
-                    <p class="text-slate-400 font-bold text-sm">Earn GP by proving your knowledge</p>
-                </div>
-                <button onclick="openQuizCreator()" class="btn-primary flex items-center gap-2">
-                    <span>+</span> CREATE CUSTOM QUIZ
-                </button>
-            </div>
-            
             <div id="quiz-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </section>
 
         <!-- Discovery Section -->
         <section id="section-discovery" class="hidden space-y-8">
-            <div class="bg-indigo-600 text-white p-6 rounded-[2rem] text-sm font-bold flex flex-col md:flex-row items-center gap-4">
-                <span class="text-2xl">🌐</span>
-                <p>When you copy this code, you can put it in a hosting service like GitHub Pages or Netlify to share your personal FloraLab with others!</p>
-            </div>
-
             <div class="glass-card p-12 rounded-[3.5rem] border-2 border-green-500/20 text-center">
-                <h2 class="text-3xl font-black mb-2">AI Plant Discovery</h2>
-                <p class="text-sm opacity-50 mb-10">Use Gemini to identify and learn about any species</p>
+                <h2 class="text-3xl font-black mb-10">AI Plant Discovery</h2>
                 <div class="flex gap-4 max-w-2xl mx-auto">
-                    <input type="text" id="api-input" placeholder="Enter plant name (e.g. Venus Flytrap, Baobab)..." class="flex-1 bg-slate-100 dark:bg-slate-800/50 p-6 rounded-[2rem] outline-none focus:ring-4 ring-green-500/10 transition-all font-bold">
-                    <button onclick="performSearch()" class="bg-green-600 text-white w-20 h-20 rounded-[2rem] flex items-center justify-center hover:bg-green-700 transition-all shadow-xl shadow-green-600/30">
+                    <input type="text" id="api-input" placeholder="Plant name..." class="flex-1 bg-slate-100 dark:bg-slate-800/50 p-6 rounded-[2rem] font-bold outline-none">
+                    <button onclick="performSearch()" class="bg-green-600 text-white w-20 h-20 rounded-[2rem] flex items-center justify-center hover:bg-green-700 shadow-xl shadow-green-600/30">
                         <span id="search-icon" class="text-3xl">🔍</span>
-                        <div id="search-loader" class="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin hidden"></div>
                     </button>
                 </div>
             </div>
+            <div id="api-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </section>
 
-            <div id="results-container" class="hidden space-y-6">
-                <div class="flex items-center justify-between px-4">
-                    <h3 class="font-black text-lg uppercase tracking-widest opacity-40">Species Insights</h3>
-                    <span id="results-count" class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">0 FOUND</span>
+        <!-- Music Page Section -->
+        <section id="section-music" class="hidden space-y-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="music-player-ui shadow-2xl">
+                    <div class="flex flex-col md:flex-row items-center gap-10">
+                        <div class="w-48 h-48 bg-green-500 rounded-[2rem] flex items-center justify-center text-7xl shadow-lg shadow-green-500/30">
+                            📻
+                        </div>
+                        <div class="flex-1 text-center md:text-left">
+                            <h2 class="text-4xl font-black mb-2">Music Studio</h2>
+                            <p class="text-slate-400 font-bold uppercase tracking-widest text-sm mb-6" id="current-track-name">Track: Botanical Beats</p>
+                            
+                            <div class="flex justify-center md:justify-start gap-4">
+                                <button onclick="toggleGlobalMusic()" class="bg-white text-slate-900 font-black px-8 py-3 rounded-xl hover:scale-105 transition-all">
+                                    TOGGLE AUDIO
+                                </button>
+                                <div class="flex items-center gap-2 px-4 bg-white/10 rounded-xl border border-white/20">
+                                    <span class="text-xs font-black">VOL</span>
+                                    <input type="range" min="0" max="1" step="0.1" value="0.5" oninput="setVolume(this.value)" class="w-24 accent-green-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="api-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+                    <!-- Producer Section -->
+                    <div class="glass-card p-8 rounded-[2.5rem] relative overflow-hidden">
+                        <div id="producer-locked" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center text-center p-8">
+                            <div class="text-4xl mb-4">🎤</div>
+                            <h3 class="font-black text-xl text-white mb-2">Unlock Producer</h3>
+                            <p class="text-slate-400 text-sm mb-6">Import audio via URL or direct file upload.</p>
+                            <button onclick="unlockProducer()" class="bg-green-600 text-white font-black px-8 py-3 rounded-xl shadow-lg">UNLOCK (500 GP)</button>
+                        </div>
+                        
+                        <div id="producer-unlocked" class="relative z-10 opacity-20">
+                            <h3 class="font-black text-xl mb-4 italic">Import Track</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                    <label class="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-50">Option 1: Device Upload</label>
+                                    <div class="file-input-wrapper w-full">
+                                        <button class="w-full bg-slate-200 dark:bg-slate-700 p-3 rounded-lg text-xs font-black uppercase">Choose MP3 File</button>
+                                        <input type="file" id="local-track-upload" accept="audio/*" onchange="handleFileUpload(this)">
+                                    </div>
+                                    <p id="file-name-preview" class="text-[9px] mt-2 font-bold text-green-600 truncate"></p>
+                                </div>
+
+                                <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                    <label class="text-[10px] font-black uppercase tracking-widest block mb-2 opacity-50">Option 2: Track URL</label>
+                                    <input type="text" id="custom-audio-url" placeholder="https://site.com/track.mp3" class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg outline-none font-bold text-xs mb-3">
+                                    <input type="text" id="custom-audio-name" placeholder="Track Name" class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg outline-none font-bold text-xs">
+                                </div>
+                                
+                                <button onclick="addNewTrack()" class="btn-primary w-full text-xs py-4">ADD TO PLAYLIST</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Playlist Section -->
+                    <div class="glass-card p-8 rounded-[2.5rem] flex flex-col h-full">
+                        <h3 class="font-black uppercase text-sm opacity-40 mb-4 tracking-widest">Global Playlist</h3>
+                        <div class="space-y-3 overflow-y-auto custom-scroll flex-1 pr-1" id="playlist-container">
+                            <!-- Tracks injected here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
 
-    <!-- Quiz Creator Modal -->
-    <div id="quiz-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] p-10 shadow-2xl">
-            <h3 class="text-2xl font-black mb-6">New Challenge</h3>
-            <div class="space-y-4">
-                <input type="text" id="cq-title" placeholder="Quiz Title (e.g. My Succulents)" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold">
-                <input type="text" id="cq-icon" placeholder="Emoji Icon (e.g. 🌵)" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold">
-                <textarea id="cq-question" placeholder="The Question" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold h-24"></textarea>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="cq-opt1" placeholder="Option 1 (Correct)" class="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl outline-none font-bold border-2 border-green-500/20">
-                    <input type="text" id="cq-opt2" placeholder="Option 2" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold">
-                    <input type="text" id="cq-opt3" placeholder="Option 3" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold">
-                    <input type="text" id="cq-opt4" placeholder="Option 4" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none font-bold">
-                </div>
-            </div>
-            <div class="flex gap-4 mt-8">
-                <button onclick="saveCustomQuiz()" class="btn-primary flex-1">SAVE CHALLENGE</button>
-                <button onclick="closeQuizCreator()" class="bg-slate-200 dark:bg-slate-800 font-black px-6 rounded-2xl">CANCEL</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const apiKey = ""; 
-        const PERSIST_KEY = "FloraLab_v2_Storage";
-
+        const PERSIST_KEY = "FloraLab_Ultimate_v2";
+        
         let state = {
             gp: 0,
             owned: [],
-            equipped: { hat: null, bg: null },
+            equipped: { hat: null, bg: null, plant: '🌱' },
             growth: 0,
             theme: 'light',
-            customQuizzes: []
+            musicEnabled: false,
+            producerUnlocked: false,
+            activeTrackIndex: 0,
+            playlist: [
+                { name: "Botanical Beats", url: "https://rohansweb-codexamples.github.io/Plant-world/background.mp3", type: 'default' }
+            ]
         };
 
-        const baseQuizzes = [
-            { id: 'q1', title: 'Photosynthesis', icon: '☀️', q: "What is the primary byproduct plants release?", opt: ["Carbon Dioxide", "Oxygen", "Nitrogen", "Argon"], c: 1 },
-            { id: 'q2', title: 'Desert Life', icon: '🌵', q: "What are water-storing plants called?", opt: ["Epiphytes", "Succulents", "Parasites", "Annuals"], c: 1 },
-            { id: 'q3', title: 'Tree Rings', icon: '🪵', q: "What does counting tree rings determine?", opt: ["Height", "Weight", "Age", "Water Level"], c: 2 },
-            { id: 'q4', title: 'Pollination', icon: '🐝', q: "Which part produces pollen?", opt: ["Stigma", "Anther", "Style", "Ovary"], c: 1 },
-            { id: 'q5', title: 'Deep Roots', icon: '🥕', q: "What is a main downward root called?", opt: ["Fibrous", "Lateral", "Taproot", "Adventitious"], c: 2 }
-        ];
+        let pendingFileUpload = null;
 
         const shopItems = [
             { id: 'b1', type: 'bg', val: 'bg-desert', emoji: '🏜️', label: 'Sahara', cost: 100 },
             { id: 'b2', type: 'bg', val: 'bg-forest', emoji: '🌲', label: 'Everglade', cost: 250 },
             { id: 'b3', type: 'bg', val: 'bg-space', emoji: '🌌', label: 'Nebula', cost: 1500 },
-            { id: 'b4', type: 'bg', val: 'bg-zen', emoji: '🎋', label: 'Zen Pond', cost: 500 },
-            { id: 'b5', type: 'bg', val: 'bg-sunset', emoji: '🌇', label: 'Red Peak', cost: 700 },
-            { id: 'b6', type: 'bg', val: 'bg-ocean', emoji: '🌊', label: 'Abyss', cost: 1200 },
-            { id: 'b7', type: 'bg', val: 'bg-cyber', emoji: '📟', label: 'Digitalis', cost: 3000 },
             { id: 'h1', type: 'hat', val: '🎩', emoji: '🎩', label: 'Top Hat', cost: 150 },
             { id: 'h2', type: 'hat', val: '👑', emoji: '👑', label: 'Royal Crown', cost: 2000 },
-            { id: 'h3', type: 'hat', val: '👒', emoji: '👒', label: 'Straw Hat', cost: 80 },
-            { id: 'h4', type: 'hat', val: '🎓', emoji: '🎓', label: 'Scholar', cost: 600 },
-            { id: 'h5', type: 'hat', val: '🤠', emoji: '🤠', label: 'Wild West', cost: 400 },
-            { id: 'h6', type: 'hat', val: '🎀', emoji: '🎀', label: 'Garden Bow', cost: 120 }
+            { id: 'p1', type: 'plant', val: '🌵', emoji: '🌵', label: 'Cactus Skin', cost: 300 },
+            { id: 'p2', type: 'plant', val: '🌻', emoji: '🌻', label: 'Sunflower Skin', cost: 400 },
+            { id: 'p3', type: 'plant', val: '🍄', emoji: '🍄', label: 'Shroom Skin', cost: 600 },
+            { id: 'h3', type: 'hat', val: '🎀', emoji: '🎀', label: 'Pink Bow', cost: 100 },
+            { id: 'h4', type: 'hat', val: '🧢', emoji: '🧢', label: 'Cool Cap', cost: 200 },
+            { id: 'h5', type: 'hat', val: '🕶️', emoji: '🕶️', label: 'Shades', cost: 500 },
+            { id: 'b4', type: 'bg', val: 'bg-zen', emoji: '🧘', label: 'Zen Garden', cost: 400 },
+            { id: 'b5', type: 'bg', val: 'bg-sunset', emoji: '🌇', label: 'Vaporwave', cost: 800 },
+            { id: 'b6', type: 'bg', val: 'bg-ocean', emoji: '🌊', label: 'Abyss', cost: 1200 },
+            { id: 'b7', type: 'bg', val: 'bg-glitch', emoji: '👾', label: 'The Matrix', cost: 3000 }
         ];
 
-        let currentShopFilter = 'all';
+        function initApp() {
+            document.getElementById('start-overlay').classList.add('hidden');
+            load();
+            state.musicEnabled = true;
+            playCurrentTrack();
+        }
 
-        const load = () => {
+        function load() {
             const saved = localStorage.getItem(PERSIST_KEY);
             if (saved) {
-                try { state = { ...state, ...JSON.parse(saved) }; } 
-                catch (e) { console.error("Load failed", e); }
+                try { 
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                    if (!state.playlist || state.playlist.length === 0) {
+                        state.playlist = [{ name: "Botanical Beats", url: "https://rohansweb-codexamples.github.io/Plant-world/background.mp3", type: 'default' }];
+                    }
+                } catch (e) {}
             }
             updateUI();
-            renderQuizzes();
-        };
+        }
 
-        const save = () => {
+        function save() {
             localStorage.setItem(PERSIST_KEY, JSON.stringify(state));
             updateUI();
-        };
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                pendingFileUpload = {
+                    name: file.name.replace(/\.[^/.]+$/, ""),
+                    url: e.target.result,
+                    type: 'local'
+                };
+                document.getElementById('file-name-preview').innerText = "Selected: " + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addNewTrack() {
+            if (pendingFileUpload) {
+                state.playlist.push(pendingFileUpload);
+                pendingFileUpload = null;
+                document.getElementById('file-name-preview').innerText = "";
+                document.getElementById('local-track-upload').value = "";
+            } else {
+                const url = document.getElementById('custom-audio-url').value.trim();
+                const name = document.getElementById('custom-audio-name').value.trim() || "Web Track";
+                if (!url.startsWith('http')) return alertMsg("Provide a URL or Upload a File");
+                state.playlist.push({ name, url, type: 'custom' });
+            }
+
+            state.activeTrackIndex = state.playlist.length - 1;
+            state.musicEnabled = true;
+            
+            document.getElementById('custom-audio-url').value = '';
+            document.getElementById('custom-audio-name').value = '';
+            
+            playCurrentTrack();
+            save();
+            alertMsg("Track Added!");
+        }
+
+        function playCurrentTrack() {
+            const audio = document.getElementById('global-audio');
+            const track = state.playlist[state.activeTrackIndex];
+            if (!track) return;
+
+            if (audio.src !== track.url) {
+                audio.src = track.url;
+                audio.load();
+            }
+
+            if (state.musicEnabled) {
+                audio.play().catch(e => console.log("Autoplay blocked"));
+            } else {
+                audio.pause();
+            }
+        }
+
+        function toggleGlobalMusic() {
+            state.musicEnabled = !state.musicEnabled;
+            playCurrentTrack();
+            save();
+        }
+
+        function setVolume(v) {
+            document.getElementById('global-audio').volume = v;
+        }
+
+        function unlockProducer() {
+            if (state.gp < 500) return alertMsg(`Need ${500 - state.gp} more GP!`);
+            state.gp -= 500;
+            state.producerUnlocked = true;
+            save();
+            alertMsg("Studio Unlocked!");
+        }
+
+        function selectTrack(index) {
+            state.activeTrackIndex = index;
+            state.musicEnabled = true;
+            playCurrentTrack();
+            save();
+        }
 
         function updateUI() {
             document.getElementById('total-score').innerText = state.gp.toLocaleString();
             document.getElementById('growth-val').innerText = state.growth + "%";
             document.getElementById('growth-bar').style.width = Math.min(100, state.growth) + "%";
-            
             document.documentElement.classList.toggle('dark', state.theme === 'dark');
             document.getElementById('theme-icon').innerText = state.theme === 'dark' ? '☀️' : '🌙';
 
-            const hat = shopItems.find(i => i.id === state.equipped.hat);
-            const bg = shopItems.find(i => i.id === state.equipped.bg);
+            const hatEl = document.getElementById('equipped-hat');
+            const bgEl = document.getElementById('plant-display-area');
+            const bgOverlay = document.getElementById('bg-emoji-overlay');
+            const plantEl = document.getElementById('plant-stage');
 
-            document.getElementById('equipped-hat').innerText = hat ? hat.val : '';
+            bgEl.className = "rounded-[3.5rem] p-12 text-center relative overflow-hidden h-[580px] flex flex-col justify-center items-center shadow-2xl transition-all duration-700";
+            hatEl.innerText = '';
+            bgOverlay.innerText = '';
             
-            const stage = document.getElementById('plant-stage');
-            const label = document.getElementById('growth-label');
-            if(state.growth >= 100) { stage.innerText = '🌳'; label.innerText = 'Ancient Oak'; }
-            else if(state.growth >= 60) { stage.innerText = '🪴'; label.innerText = 'Blooming Shrub'; }
-            else if(state.growth >= 30) { stage.innerText = '🌿'; label.innerText = 'Young Fern'; }
-            else { stage.innerText = '🌱'; label.innerText = 'Fresh Seedling'; }
+            shopItems.forEach(item => {
+                if (state.equipped.hat === item.id) hatEl.innerText = item.val;
+                if (state.equipped.bg === item.id) {
+                    bgEl.classList.add(item.val);
+                    bgOverlay.innerText = item.emoji;
+                }
+                if (state.equipped.plant === item.id) plantEl.innerText = item.val;
+            });
 
-            const display = document.getElementById('plant-display-area');
-            const overlay = document.getElementById('bg-emoji-overlay');
+            if (!state.equipped.plant || state.equipped.plant === '🌱') {
+                 if (state.growth > 80) plantEl.innerText = '🌳';
+                 else if (state.growth > 40) plantEl.innerText = '🌿';
+                 else plantEl.innerText = '🌱';
+            }
+
+            const statusIcon = document.getElementById('music-status-icon');
+            statusIcon.innerText = state.musicEnabled ? '🔊' : '🔇';
             
-            display.className = `rounded-[3.5rem] p-12 text-center relative overflow-hidden h-[580px] flex flex-col justify-center items-center shadow-2xl transition-all duration-700 ${bg ? bg.val : 'bg-slate-100 dark:bg-slate-900'}`;
-            overlay.innerText = bg ? bg.emoji : '';
+            const currentTrack = state.playlist[state.activeTrackIndex] || state.playlist[0];
+            document.getElementById('current-track-name').innerText = `Track: ${currentTrack.name}`;
+
+            if (state.producerUnlocked) {
+                document.getElementById('producer-locked').classList.add('hidden');
+                document.getElementById('producer-unlocked').classList.remove('opacity-20');
+            }
 
             renderShop();
+            renderPlaylist();
         }
 
-        function filterShop(type) {
-            currentShopFilter = type;
-            renderShop();
-        }
-
-        function renderShop() {
-            const grid = document.getElementById('shop-grid');
-            grid.innerHTML = '';
-            
-            const filtered = shopItems.filter(i => currentShopFilter === 'all' || i.type === currentShopFilter);
-
-            filtered.forEach(item => {
-                const owned = state.owned.includes(item.id);
-                const active = state.equipped[item.type === 'bg' ? 'bg' : 'hat'] === item.id;
-                
-                const card = document.createElement('div');
-                card.className = `relative p-5 rounded-[2.5rem] border-2 transition-all cursor-pointer flex flex-col items-center text-center ${active ? 'equipped-ring bg-white dark:bg-white/5 shadow-xl' : 'bg-white/50 dark:bg-white/5 border-transparent hover:border-slate-300'}`;
-                card.onclick = () => {
-                    if(!owned) {
-                        if(state.gp < item.cost) return alertMsg(`Missing ${item.cost - state.gp} GP!`);
-                        state.gp -= item.cost;
-                        state.owned.push(item.id);
-                        alertMsg(`Purchased ${item.label}!`);
-                    } else {
-                        if(item.type === 'bg') state.equipped.bg = active ? null : item.id;
-                        else if(item.type === 'hat') state.equipped.hat = active ? null : item.id;
-                    }
-                    save();
-                };
-                card.innerHTML = `
-                    ${owned ? '<span class="owned-badge">OWNED</span>' : ''}
-                    <div class="text-4xl mb-2">${item.emoji}</div>
-                    <div class="text-[10px] font-black uppercase opacity-60 mb-2 truncate w-full">${item.label}</div>
-                    <div class="text-[10px] font-black ${owned ? 'text-green-600' : 'text-orange-500'}">${owned ? (active ? 'UNEQUIP' : 'EQUIP') : item.cost + ' GP'}</div>
+        function renderPlaylist() {
+            const container = document.getElementById('playlist-container');
+            container.innerHTML = '';
+            state.playlist.forEach((track, index) => {
+                const isActive = state.activeTrackIndex === index;
+                const div = document.createElement('div');
+                div.className = `track-item ${isActive ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">${track.type === 'default' ? '🎵' : track.type === 'local' ? '📂' : '💿'}</span>
+                        <div class="overflow-hidden">
+                            <p class="font-black text-[11px] truncate w-24 sm:w-32">${track.name}</p>
+                            <p class="text-[8px] opacity-40 uppercase font-bold">${track.type}</p>
+                        </div>
+                    </div>
+                    <button onclick="selectTrack(${index})" class="bg-green-600 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">
+                        ${isActive ? 'PLAYING' : 'PLAY'}
+                    </button>
                 `;
-                grid.appendChild(card);
+                container.appendChild(div);
             });
         }
 
         function careAction(type) {
             state.growth = Math.min(100, state.growth + 2);
-            state.gp += 10;
+            state.gp += 20;
             save();
-            alertMsg(type === 'water' ? "Splash! +10 GP" : "Glowing! +10 GP");
+            alertMsg("+20 GP");
+        }
+
+        function renderShop() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+            shopItems.forEach(item => {
+                const owned = state.owned.includes(item.id);
+                const active = state.equipped[item.type] === item.id;
+                const card = document.createElement('div');
+                card.className = `relative p-5 rounded-[2.5rem] border-2 transition-all cursor-pointer flex flex-col items-center text-center ${active ? 'equipped-ring bg-white dark:bg-white/5' : 'bg-white/50 dark:bg-white/5 border-transparent'}`;
+                
+                card.onclick = () => {
+                    if(!owned) {
+                        if(state.gp < item.cost) return alertMsg("Need more GP!");
+                        state.gp -= item.cost;
+                        state.owned.push(item.id);
+                    } else {
+                        state.equipped[item.type] = active ? null : item.id;
+                    }
+                    save();
+                };
+
+                card.innerHTML = `
+                    <div class="text-3xl mb-1">${item.emoji}</div>
+                    <div class="text-[9px] font-black mb-1 opacity-60 uppercase">${item.label}</div>
+                    <div class="text-[10px] font-black ${owned ? 'text-green-600' : ''}">
+                        ${owned ? (active ? 'UNEQUIP' : 'EQUIP') : item.cost + ' GP'}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
         function switchTab(t) {
-            ['care', 'quiz', 'discovery'].forEach(s => {
+            ['care', 'quiz', 'discovery', 'music'].forEach(s => {
                 document.getElementById(`section-${s}`).classList.add('hidden');
                 document.getElementById(`tab-${s}`).classList.replace('tab-active', 'text-slate-400');
             });
             document.getElementById(`section-${t}`).classList.remove('hidden');
             document.getElementById(`tab-${t}`).classList.replace('text-slate-400', 'tab-active');
-            if(t === 'quiz') renderQuizzes();
         }
 
-        async function performSearch() {
-            const query = document.getElementById('api-input').value.trim();
-            if (!query) return;
+        function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; save(); }
 
-            const loader = document.getElementById('search-loader');
-            const icon = document.getElementById('search-icon');
-            loader.classList.remove('hidden');
-            icon.classList.add('hidden');
-
-            const systemPrompt = "You are an expert botanical database. Return results for the requested plant in JSON format. Return an array of 1 to 3 relevant species. For each result, include common_name, scientific_name, family, description (about 30 words), and an emoji icon representing the plant.";
-            
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Search for: ${query}` }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { 
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    results: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                common_name: { type: "STRING" },
-                                                scientific_name: { type: "STRING" },
-                                                family: { type: "STRING" },
-                                                description: { type: "STRING" },
-                                                emoji: { type: "STRING" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    })
-                });
-
-                if(!response.ok) throw new Error("API Error");
-                const data = await response.json();
-                const text = data.candidates[0].content.parts[0].text;
-                const parsed = JSON.parse(text);
-                
-                renderResults(parsed.results);
-                state.gp += 50;
-                save();
-                alertMsg("Research complete! +50 GP");
-            } catch (e) {
-                console.error(e);
-                alertMsg("Botanical search offline. Try again.");
-            } finally {
-                loader.classList.add('hidden');
-                icon.classList.remove('hidden');
-            }
-        }
-
-        function renderResults(plants) {
-            const container = document.getElementById('results-container');
-            const grid = document.getElementById('api-results');
-            container.classList.remove('hidden');
-            document.getElementById('results-count').innerText = `${plants.length} SPECIES FOUND`;
-            grid.innerHTML = '';
-            plants.forEach(p => {
-                const card = document.createElement('div');
-                card.className = "glass-card p-8 rounded-[3rem] hover:shadow-2xl transition-all border-2 border-transparent hover:border-green-500/30";
-                card.innerHTML = `
-                    <div class="text-6xl mb-6">${p.emoji || '🌿'}</div>
-                    <div class="text-[10px] font-black text-green-600 uppercase mb-2 tracking-widest">${p.family}</div>
-                    <h3 class="font-black text-2xl mb-1">${p.common_name}</h3>
-                    <p class="text-xs italic opacity-40 mb-4">${p.scientific_name}</p>
-                    <p class="text-sm opacity-70 leading-relaxed">${p.description}</p>
-                `;
-                grid.appendChild(card);
-            });
-            grid.scrollIntoView({ behavior: 'smooth' });
+        function alertMsg(t) {
+            const m = document.createElement('div');
+            m.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black text-xs z-[2000] shadow-2xl animate-bounce";
+            m.innerText = t.toUpperCase();
+            document.body.appendChild(m);
+            setTimeout(() => m.remove(), 2500);
         }
 
         function renderQuizzes() {
             const list = document.getElementById('quiz-list');
-            list.innerHTML = '';
-            
-            const all = [...baseQuizzes, ...state.customQuizzes];
-            
-            all.forEach(q => {
-                const card = document.createElement('div');
-                card.className = "glass-card p-8 rounded-[2.5rem] hover:border-green-500 border-2 border-transparent transition-all cursor-pointer group flex flex-col items-center text-center relative";
-                
-                const isCustom = q.id.startsWith('custom_');
-
-                card.innerHTML = `
-                    <div onclick="takeQuiz('${q.id}')" class="w-full">
-                        <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">${q.icon}</div>
-                        <h3 class="text-lg font-black uppercase tracking-tight mb-2">${q.title}</h3>
-                        <p class="text-[10px] font-bold opacity-30 uppercase tracking-widest">100 GP Prize</p>
-                    </div>
-                    ${isCustom ? `
-                        <button onclick="getShareCode('${q.id}')" class="mt-4 text-[9px] font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full hover:bg-green-600 hover:text-white transition-colors">
-                            GET SHARE CODE
-                        </button>
-                    ` : ''}
-                `;
-                list.appendChild(card);
-            });
+            list.innerHTML = `<div class="glass-card p-8 rounded-3xl text-center">
+                <div class="text-4xl mb-2">☀️</div>
+                <h3 class="font-black uppercase tracking-widest text-sm">Photosynthesis</h3>
+                <button onclick="takeQuiz()" class="mt-6 btn-primary py-3 text-[10px]">TAKE CHALLENGE (100 GP)</button>
+            </div>`;
         }
-
-        function takeQuiz(id) {
-            const all = [...baseQuizzes, ...state.customQuizzes];
-            const q = all.find(x => x.id === id);
-            if(!q) return;
-
-            const options = q.opt.map((o, i) => `${i+1}. ${o}`).join('\n');
-            const ans = prompt(`${q.q}\n\n${options}\n\nType the number of your answer:`);
-            
-            if (ans && parseInt(ans) === q.c + 1) {
-                state.gp += 100;
-                alertMsg("Excellent! +100 GP");
-                save();
-            } else if (ans !== null) {
-                alertMsg("Incorrect. Study up!");
+        
+        function takeQuiz() {
+            if(prompt("What do plants absorb for energy? (Sunlight/Pizza)")?.toLowerCase() === 'sunlight') {
+                state.gp += 100; alertMsg("Challenge Complete! +100 GP"); save();
+            } else {
+                alertMsg("Incorrect!");
             }
         }
 
-        function getShareCode(id) {
-            const q = state.customQuizzes.find(x => x.id === id);
-            if(!q) return;
-            const code = JSON.stringify(q);
-            
-            const dummy = document.createElement("textarea");
-            document.body.appendChild(dummy);
-            dummy.value = code;
-            dummy.select();
-            document.execCommand("copy");
-            document.body.removeChild(dummy);
-            
-            alertMsg("Code copied to clipboard!");
-        }
-
-        function openQuizCreator() { document.getElementById('quiz-modal').classList.remove('hidden'); }
-        function closeQuizCreator() { document.getElementById('quiz-modal').classList.add('hidden'); }
-
-        function saveCustomQuiz() {
-            const title = document.getElementById('cq-title').value;
-            const icon = document.getElementById('cq-icon').value || '❓';
-            const qTxt = document.getElementById('cq-question').value;
-            const o1 = document.getElementById('cq-opt1').value;
-            const o2 = document.getElementById('cq-opt2').value;
-            const o3 = document.getElementById('cq-opt3').value;
-            const o4 = document.getElementById('cq-opt4').value;
-
-            if(!title || !qTxt || !o1 || !o2) return alertMsg("Please fill core fields!");
-
-            const newQ = {
-                id: 'custom_' + Date.now(),
-                title,
-                icon,
-                q: qTxt,
-                opt: [o1, o2, o3, o4].filter(x => x),
-                c: 0 
-            };
-
-            state.customQuizzes.push(newQ);
-            save();
-            renderQuizzes();
-            closeQuizCreator();
-            alertMsg("Challenge Created!");
-            
-            ['cq-title', 'cq-icon', 'cq-question', 'cq-opt1', 'cq-opt2', 'cq-opt3', 'cq-opt4'].forEach(id => {
-                document.getElementById(id).value = '';
-            });
-        }
-
-        function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; save(); }
-        
-        function alertMsg(t) {
-            const m = document.createElement('div');
-            m.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black text-xs shadow-2xl z-[200] animate-bounce pointer-events-none";
-            m.innerText = t.toUpperCase();
-            document.body.appendChild(m);
-            setTimeout(() => {
-                m.classList.replace('animate-bounce', 'opacity-0');
-                setTimeout(() => m.remove(), 500);
-            }, 2000);
-        }
-
-        function resetGame() { 
-            if(confirm("Permanently wipe your garden and all data?")) { 
-                localStorage.removeItem(PERSIST_KEY); 
-                location.reload(); 
-            } 
-        }
-
-        window.onload = load;
+        renderQuizzes();
     </script>
 </body>
 </html>
