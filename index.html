@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant World | Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .fern-header {
+            background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), 
+                        url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.active { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-emerald-50 text-emerald-900 overflow-x-hidden">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-white p-4 flex justify-between items-center border-b border-emerald-100 sticky top-0 z-50">
+        <div class="flex items-center gap-2 font-bold text-xl text-emerald-700">
+            <i class="fas fa-leaf"></i>
+            <span>Plant World</span>
+        </div>
+        <button onclick="toggleSidebar()" class="text-2xl text-emerald-700">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Responsive Sidebar -->
+        <aside id="sidebar" class="sidebar fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-emerald-100 z-[100] p-6 flex flex-col md:transform-none">
+            <div class="hidden md:flex items-center gap-2 font-bold text-2xl text-emerald-700 mb-10">
+                <i class="fas fa-leaf"></i>
+                <span>Plant World</span>
+            </div>
+
+            <nav class="flex-1 space-y-2">
+                <a href="index.html" class="flex items-center gap-3 p-3 bg-emerald-500 text-white rounded-xl font-medium shadow-md shadow-emerald-100">
+                    <i class="fas fa-home w-5"></i> Home
+                </a>
+                <a href="discovery.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
+                    <i class="fas fa-search w-5 text-emerald-400 group-hover:text-emerald-600"></i> Discovery
+                </a>
+                <a href="database.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
+                    <i class="fas fa-book w-5 text-emerald-400 group-hover:text-emerald-600"></i> Database
+                </a>
+                <a href="tracker.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
+                    <i class="fas fa-table w-5 text-emerald-400 group-hover:text-emerald-600"></i> Tracker
+                </a>
+                <a href="games.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
+                    <i class="fas fa-gamepad w-5 text-emerald-400 group-hover:text-emerald-600"></i> Play Games
+                </a>
+                <a href="quizzes.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
+                    <i class="fas fa-lightbulb w-5 text-emerald-400 group-hover:text-emerald-600"></i> Quizzes
+                </a>
+            </nav>
+
+            <div class="pt-6 border-t border-emerald-100">
+                <div id="user-profile" class="hidden mb-4 p-3 bg-emerald-50 rounded-xl flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700">
+                        <i class="fas fa-user text-xs"></i>
+                    </div>
+                    <span id="user-name" class="text-xs font-bold truncate">...</span>
+                </div>
+                <a href="login.html" id="auth-link" class="flex items-center gap-3 p-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-sign-in-alt w-5"></i> <span>Login</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Overlay for Mobile -->
+        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-[90] hidden md:hidden"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-10">
+            <section class="fern-header rounded-3xl p-8 md:p-16 shadow-lg border border-white/50 mb-10">
+                <h1 class="text-4xl md:text-6xl font-black text-emerald-950 mb-4 leading-tight">Your Digital<br>Green Space.</h1>
+                <p class="text-lg md:text-xl text-emerald-800 max-w-lg mb-8 font-medium">Start your journey to becoming a master plant parent today with tracking, discovery, and community tools.</p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="discovery.html" class="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition">Get Started</a>
+                    <a href="tracker.html" class="px-8 py-4 bg-white text-emerald-700 rounded-2xl font-bold border border-emerald-100 hover:bg-emerald-50 transition">My Plants</a>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-lime-100 text-lime-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-bell text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Daily Notifications</h3>
+                    <p class="text-gray-500 leading-relaxed">Never forget to water again. We notify you exactly when your plants are thirsty based on their specific needs.</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-microchip text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">AI Diagnosis</h3>
+                    <p class="text-gray-500 leading-relaxed">Identify diseases and pests just by taking a photo of your plant's leaves. Our AI provides instant treatment steps.</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-trophy text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Grow Quizzes</h3>
+                    <p class="text-gray-500 leading-relaxed">Compete with friends and earn botanical badges as you learn about rare species and professional care tips.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            const authLink = document.getElementById('auth-link');
+            const userProfile = document.getElementById('user-profile');
+            const userName = document.getElementById('user-name');
+
+            if (user) {
+                userProfile.classList.remove('hidden');
+                userName.innerText = user.email || 'Gardener';
+                authLink.innerHTML = '<i class="fas fa-sign-out-alt w-5"></i> <span>Logout</span>';
+                authLink.href = "#";
+                authLink.onclick = (e) => {
+                    e.preventDefault();
+                    signOut(auth);
+                };
+            } else {
+                userProfile.classList.add('hidden');
+                authLink.innerHTML = '<i class="fas fa-sign-in-alt w-5"></i> <span>Login</span>';
+                authLink.href = "login.html";
+                authLink.onclick = null;
+            }
+        });
+    </script>
+</body>
+</html>

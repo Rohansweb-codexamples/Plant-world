@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant World | Access Garden</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .tab-active {
+            border-bottom: 3px solid #059669;
+            color: #064e3b;
+        }
+        .form-container {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-emerald-50 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-md w-full bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border border-emerald-100">
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl mb-4 transform -rotate-12">
+                <i class="fas fa-seedling text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-black text-emerald-950">Garden Portal</h1>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-emerald-100 mb-8">
+            <button onclick="toggleView('login')" id="tab-login" class="flex-1 py-3 font-bold text-emerald-600 transition tab-active">Login</button>
+            <button onclick="toggleView('signup')" id="tab-signup" class="flex-1 py-3 font-bold text-emerald-600 transition">Sign Up</button>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div id="status-msg" class="hidden text-center text-sm font-bold p-3 rounded-xl border mb-4"></div>
+
+        <!-- Login View -->
+        <div id="view-login" class="form-container space-y-4">
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-widest mb-1 ml-1">Email Address</label>
+                    <input type="email" id="login-email" required class="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="fern@example.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-widest mb-1 ml-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" id="login-btn" class="w-full py-5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                    <span>Login to Garden</span>
+                    <i class="fas fa-arrow-right text-sm"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Signup View -->
+        <div id="view-signup" class="form-container hidden space-y-4">
+            <form id="signup-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-widest mb-1 ml-1">Email Address</label>
+                    <input type="email" id="signup-email" required class="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="new-gardener@example.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-widest mb-1 ml-1">Choose Password</label>
+                    <input type="password" id="signup-password" required minlength="6" class="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase tracking-widest mb-1 ml-1">Confirm Password</label>
+                    <input type="password" id="signup-confirm" required minlength="6" class="w-full px-5 py-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" id="signup-btn" class="w-full py-5 bg-emerald-800 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-900 transition flex items-center justify-center gap-2">
+                    <span>Create Account</span>
+                    <i class="fas fa-seedling text-sm"></i>
+                </button>
+            </form>
+            <p class="text-center text-xs text-emerald-400">By signing up, you agree to join our community of plant parents.</p>
+        </div>
+
+        <div class="mt-8 text-center space-y-4">
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-emerald-100"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-4 bg-white text-emerald-300 font-medium">Navigation</span></div>
+            </div>
+            <a href="index.html" class="block w-full text-emerald-700 font-bold hover:text-emerald-900 transition flex items-center justify-center gap-2">
+                <i class="fas fa-home"></i>
+                Back to Website
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleView(view) {
+            const loginView = document.getElementById('view-login');
+            const signupView = document.getElementById('view-signup');
+            const tabLogin = document.getElementById('tab-login');
+            const tabSignup = document.getElementById('tab-signup');
+            const statusMsg = document.getElementById('status-msg');
+
+            statusMsg.classList.add('hidden'); // Clear errors on toggle
+
+            if (view === 'login') {
+                loginView.classList.remove('hidden');
+                signupView.classList.add('hidden');
+                tabLogin.classList.add('tab-active');
+                tabSignup.classList.remove('tab-active');
+            } else {
+                loginView.classList.add('hidden');
+                signupView.classList.remove('hidden');
+                tabLogin.classList.remove('tab-active');
+                tabSignup.classList.add('tab-active');
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const statusMsg = document.getElementById('status-msg');
+
+        function showMessage(msg, isError = true) {
+            statusMsg.innerText = msg;
+            statusMsg.classList.remove('hidden', 'bg-red-50', 'text-red-500', 'border-red-100', 'bg-emerald-50', 'text-emerald-600', 'border-emerald-100');
+            
+            if (isError) {
+                statusMsg.classList.add('bg-red-50', 'text-red-500', 'border-red-100');
+            } else {
+                statusMsg.classList.add('bg-emerald-50', 'text-emerald-600', 'border-emerald-100');
+            }
+        }
+
+        // Login Logic
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+
+            statusMsg.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Checking Garden...';
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = 'index.html';
+            } catch (error) {
+                showMessage(getErrorMessage(error.code));
+                btn.disabled = false;
+                btn.innerHTML = '<span>Login to Garden</span> <i class="fas fa-arrow-right text-sm"></i>';
+            }
+        });
+
+        // Signup Logic
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const btn = document.getElementById('signup-btn');
+
+            if (password !== confirm) {
+                showMessage("Passwords do not match.");
+                return;
+            }
+
+            statusMsg.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Planting Seeds...';
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showMessage("Account created! Redirecting...", false);
+                setTimeout(() => window.location.href = 'index.html', 1500);
+            } catch (error) {
+                showMessage(getErrorMessage(error.code));
+                btn.disabled = false;
+                btn.innerHTML = '<span>Create Account</span> <i class="fas fa-seedling text-sm"></i>';
+            }
+        });
+
+        function getErrorMessage(code) {
+            switch(code) {
+                case 'auth/email-already-in-use': return 'This email is already registered.';
+                case 'auth/invalid-email': return 'Invalid email format.';
+                case 'auth/weak-password': return 'Password should be at least 6 characters.';
+                case 'auth/user-not-found': return 'Account not found.';
+                case 'auth/wrong-password': return 'Incorrect password.';
+                case 'auth/invalid-credential': return 'Invalid credentials.';
+                default: return 'Action failed. Please try again.';
+            }
+        }
+    </script>
+</body>
+</html>

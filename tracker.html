@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant World | Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.active { transform: translateX(0); }
+        }
+        .sheet-input { border: none; background: transparent; width: 100%; padding: 8px; }
+        .sheet-input:focus { outline: 2px solid #10b981; background: #ecfdf5; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-emerald-50">
+    <!-- Overlay for Mobile -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-[90] hidden md:hidden"></div>
+
+    <header class="md:hidden bg-white p-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 font-bold text-xl text-emerald-700"><span>Tracker</span></div>
+        <button onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Reusable Sidebar -->
+        <aside id="sidebar" class="sidebar fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-emerald-100 z-[100] p-6 flex flex-col md:transform-none">
+            <div class="hidden md:flex items-center gap-2 font-bold text-2xl text-emerald-700 mb-10">
+                <i class="fas fa-leaf"></i>
+                <span>Plant World</span>
+            </div>
+
+            <nav class="flex-1 space-y-2 text-sm md:text-base">
+                <a href="index.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-home w-5"></i> Home
+                </a>
+                <a href="tracker.html" class="flex items-center gap-3 p-3 bg-emerald-500 text-white rounded-xl font-medium">
+                    <i class="fas fa-table w-5"></i> Tracker
+                </a>
+                <a href="discovery.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-search w-5"></i> Discovery
+                </a>
+                <a href="database.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-book w-5"></i> Database
+                </a>
+                <a href="games.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-gamepad w-5"></i> Play Games
+                </a>
+                <a href="quizzes.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-lightbulb w-5"></i> Quizzes
+                </a>
+            </nav>
+
+            <div class="pt-6 border-t border-emerald-100">
+                <a href="login.html" id="auth-link" class="flex items-center gap-3 p-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl transition">
+                    <i class="fas fa-user-circle w-5"></i> <span>Login</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-4 md:p-10 overflow-hidden">
+            <div class="bg-white rounded-[2rem] shadow-sm border border-emerald-100">
+                <div class="p-6 border-b border-emerald-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <h1 class="text-2xl font-black text-emerald-950">Plant Health Spreadsheet</h1>
+                    <button onclick="addNewPlant()" class="w-full md:w-auto px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-md shadow-emerald-100 transition hover:bg-emerald-700">
+                        <i class="fas fa-plus mr-2"></i>Add Plant
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead class="bg-emerald-50 text-emerald-700 text-sm">
+                            <tr>
+                                <th class="p-4 text-left">Plant Species</th>
+                                <th class="p-4 text-left">Water Status</th>
+                                <th class="p-4 text-left">Health (1-10)</th>
+                                <th class="p-4 text-left">Location</th>
+                                <th class="p-4 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tracker-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Define toggleSidebar in the global scope so inline onclick can see it
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('hidden');
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'leafy-life-001';
+
+        // --- Auth Setup ---
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            const authLink = document.getElementById('auth-link');
+            if (user) {
+                if (authLink) {
+                    authLink.querySelector('span').innerText = user.isAnonymous ? 'Guest' : (user.email ? user.email.split('@')[0] : 'Member');
+                }
+                setupTrackerListener(user.uid);
+            }
+        });
+
+        // --- Firestore Operations ---
+        function setupTrackerListener(uid) {
+            const plantsRef = collection(db, 'artifacts', appId, 'users', uid, 'plants');
+            onSnapshot(plantsRef, (snapshot) => {
+                const list = document.getElementById('tracker-list');
+                if (!list) return;
+                list.innerHTML = '';
+                snapshot.forEach(doc => renderRow(doc.id, doc.data()));
+            }, (err) => console.error("Firestore error:", err));
+        }
+
+        window.addNewPlant = async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const plantsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'plants');
+            try {
+                await setDoc(doc(plantsRef), {
+                    name: "New Fern", 
+                    status: "Hydrated", 
+                    health: 10, 
+                    location: "Indoors",
+                    createdAt: Date.now()
+                });
+            } catch (err) {
+                console.error("Add error:", err);
+            }
+        };
+
+        function renderRow(id, data) {
+            const list = document.getElementById('tracker-list');
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-emerald-50 hover:bg-emerald-50/30 transition-colors";
+            tr.innerHTML = `
+                <td class="p-2"><input class="sheet-input font-bold" value="${data.name || ''}" onchange="updatePlant('${id}', 'name', this.value)"></td>
+                <td class="p-2">
+                    <select class="sheet-input" onchange="updatePlant('${id}', 'status', this.value)">
+                        <option value="Hydrated" ${data.status === 'Hydrated' ? 'selected' : ''}>Hydrated</option>
+                        <option value="Needs Water" ${data.status === 'Needs Water' ? 'selected' : ''}>Needs Water</option>
+                    </select>
+                </td>
+                <td class="p-2"><input type="number" class="sheet-input" value="${data.health || 0}" onchange="updatePlant('${id}', 'health', this.value)"></td>
+                <td class="p-2"><input class="sheet-input" value="${data.location || ''}" onchange="updatePlant('${id}', 'location', this.value)"></td>
+                <td class="p-2 text-center"><button onclick="deletePlant('${id}')" class="text-red-300 hover:text-red-500 transition-colors"><i class="fas fa-trash"></i></button></td>
+            `;
+            list.appendChild(tr);
+        }
+
+        window.updatePlant = async (id, field, value) => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'plants', id);
+            await updateDoc(ref, { [field]: value });
+        };
+
+        window.deletePlant = async (id) => {
+            const user = auth.currentUser;
+            if (!user || !confirm("Delete this plant?")) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'plants', id));
+        };
+    </script>
+</body>
+</html>
