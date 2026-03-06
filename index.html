@@ -3,158 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plant World | Home</title>
+    <title>Plant World | Complete Garden System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .fern-header {
-            background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), 
-                        url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-        }
+        .sidebar { transition: transform 0.3s ease; }
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar { transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+        }
+        .register-input {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            width: 100%;
+            padding: 8px;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .register-input:focus {
+            background: #ffffff;
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+        }
+        .share-toast {
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-enter {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
-<body class="bg-emerald-50 text-emerald-900 overflow-x-hidden">
+<body class="bg-emerald-50 text-emerald-900 font-sans min-h-screen">
 
     <!-- Mobile Header -->
-    <header class="md:hidden bg-white p-4 flex justify-between items-center border-b border-emerald-100 sticky top-0 z-50">
+    <header id="mobile-header" class="md:hidden bg-white p-4 flex justify-between items-center border-b border-emerald-100 sticky top-0 z-50">
         <div class="flex items-center gap-2 font-bold text-xl text-emerald-700">
-            <i class="fas fa-leaf"></i>
-            <span>Plant World</span>
+            <i class="fas fa-leaf"></i> <span>Plant World</span>
         </div>
         <button onclick="toggleSidebar()" class="text-2xl text-emerald-700">
             <i class="fas fa-bars"></i>
         </button>
     </header>
 
-    <div class="flex min-h-screen">
-        <!-- Responsive Sidebar -->
+    <div class="flex">
+        <!-- Sidebar Navigation -->
         <aside id="sidebar" class="sidebar fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-emerald-100 z-[100] p-6 flex flex-col md:transform-none">
-            <div class="hidden md:flex items-center gap-2 font-bold text-2xl text-emerald-700 mb-10">
-                <i class="fas fa-leaf"></i>
-                <span>Plant World</span>
+            <div class="hidden md:flex items-center gap-2 font-bold text-2xl text-emerald-700 mb-8">
+                <i class="fas fa-leaf"></i> <span>Plant World</span>
             </div>
 
-            <nav class="flex-1 space-y-2">
-                <a href="index.html" class="flex items-center gap-3 p-3 bg-emerald-500 text-white rounded-xl font-medium shadow-md shadow-emerald-100">
+            <nav id="main-nav" class="flex-1 space-y-1">
+                <button onclick="navigate('home')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl transition font-medium bg-emerald-500 text-white" id="nav-home">
                     <i class="fas fa-home w-5"></i> Home
-                </a>
-                <a href="discovery.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
-                    <i class="fas fa-search w-5 text-emerald-400 group-hover:text-emerald-600"></i> Discovery
-                </a>
-                <a href="database.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
-                    <i class="fas fa-book w-5 text-emerald-400 group-hover:text-emerald-600"></i> Database
-                </a>
-                <a href="tracker.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
-                    <i class="fas fa-table w-5 text-emerald-400 group-hover:text-emerald-600"></i> Tracker
-                </a>
-                <a href="games.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
-                    <i class="fas fa-gamepad w-5 text-emerald-400 group-hover:text-emerald-600"></i> Play Games
-                </a>
-                <a href="quizzes.html" class="flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-xl transition group">
-                    <i class="fas fa-lightbulb w-5 text-emerald-400 group-hover:text-emerald-600"></i> Quizzes
-                </a>
+                </button>
+                <button onclick="navigate('register')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl transition font-medium hover:bg-emerald-50" id="nav-register">
+                    <i class="fas fa-clipboard-list w-5"></i> Daily Register
+                </button>
+                <button onclick="navigate('stats')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl transition font-medium hover:bg-emerald-50" id="nav-stats">
+                    <i class="fas fa-chart-bar w-5"></i> Growth Stats
+                </button>
+                <button onclick="navigate('discovery')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl transition font-medium hover:bg-emerald-50" id="nav-discovery">
+                    <i class="fas fa-search w-5"></i> Discovery
+                </button>
             </nav>
 
-            <div class="pt-6 border-t border-emerald-100">
-                <div id="user-profile" class="hidden mb-4 p-3 bg-emerald-50 rounded-xl flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700">
-                        <i class="fas fa-user text-xs"></i>
-                    </div>
-                    <span id="user-name" class="text-xs font-bold truncate">...</span>
-                </div>
-                <a href="login.html" id="auth-link" class="flex items-center gap-3 p-3 text-emerald-600 font-bold hover:bg-emerald-50 rounded-xl transition">
-                    <i class="fas fa-sign-in-alt w-5"></i> <span>Login</span>
-                </a>
+            <div class="pt-6 border-t border-emerald-100 mt-auto">
+                <button onclick="clearAllData()" class="text-xs text-red-400 hover:text-red-600 font-bold uppercase tracking-widest">Reset All Data</button>
             </div>
         </aside>
 
-        <!-- Overlay for Mobile -->
-        <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-[90] hidden md:hidden"></div>
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
+            
+            <!-- PREVIEW MODE BANNER -->
+            <div id="preview-banner" class="hidden mb-6 bg-amber-100 border border-amber-200 p-4 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3 text-amber-800">
+                    <i class="fas fa-eye"></i>
+                    <span class="font-bold">Public Preview Mode (Read Only)</span>
+                </div>
+                <button onclick="exitPreview()" class="text-xs bg-amber-800 text-white px-3 py-1 rounded-lg">Back to Editor</button>
+            </div>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-4 md:p-10">
-            <section class="fern-header rounded-3xl p-8 md:p-16 shadow-lg border border-white/50 mb-10">
-                <h1 class="text-4xl md:text-6xl font-black text-emerald-950 mb-4 leading-tight">Your Digital<br>Green Space.</h1>
-                <p class="text-lg md:text-xl text-emerald-800 max-w-lg mb-8 font-medium">Start your journey to becoming a master plant parent today with tracking, discovery, and community tools.</p>
-                <div class="flex flex-wrap gap-4">
-                    <a href="discovery.html" class="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition">Get Started</a>
-                    <a href="tracker.html" class="px-8 py-4 bg-white text-emerald-700 rounded-2xl font-bold border border-emerald-100 hover:bg-emerald-50 transition">My Plants</a>
+            <!-- HOME PAGE -->
+            <section id="page-home" class="page-content">
+                <div class="mb-8 text-center md:text-left">
+                    <h1 class="text-3xl md:text-5xl font-black text-emerald-950 mb-2">My Garden Dashboard</h1>
+                    <p class="text-emerald-600" id="welcome-msg">Your garden data is safe and synced.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div class="glass-card p-6 rounded-[2rem] shadow-sm border-l-4 border-l-emerald-500">
+                        <h3 class="font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-share-alt text-emerald-500"></i> Sharing & Public Links
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">Share your plant's progress. Generated links show daily heights and health status.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="navigate('register')" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl font-bold text-sm hover:bg-emerald-200 transition">
+                                Manage Links
+                            </button>
+                            <a href="https://rohansweb-codexamples.github.io/Plant-world/" target="_blank" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition">
+                                View Community
+                            </a>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-900 text-emerald-50 p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
+                        <div class="relative z-10">
+                            <h3 class="font-bold mb-2">Daily Goal</h3>
+                            <p class="text-emerald-300 text-sm mb-4" id="quick-status">Calculation health status...</p>
+                            <button onclick="navigate('register')" class="w-full py-3 bg-lime-400 text-emerald-950 rounded-xl font-bold hover:bg-lime-300 transition">Complete Today's Register</button>
+                        </div>
+                        <i class="fas fa-seedling absolute -bottom-4 -right-4 text-emerald-800 text-8xl opacity-30 transform rotate-12"></i>
+                    </div>
+                </div>
+
+                <h2 class="font-bold text-xl mb-4">Current Height Distribution</h2>
+                <div class="glass-card p-6 rounded-[2rem] h-[350px]">
+                    <canvas id="growthChart"></canvas>
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
-                    <div class="w-14 h-14 bg-lime-100 text-lime-600 rounded-2xl flex items-center justify-center mb-6">
-                        <i class="fas fa-bell text-2xl"></i>
+            <!-- DAILY REGISTER PAGE -->
+            <section id="page-register" class="page-content hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-emerald-900">Plant Register</h2>
+                        <p class="text-sm text-emerald-600">Log today's height and leaf counts. Click Submit to save to history.</p>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">Daily Notifications</h3>
-                    <p class="text-gray-500 leading-relaxed">Never forget to water again. We notify you exactly when your plants are thirsty based on their specific needs.</p>
-                </div>
-                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
-                    <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                        <i class="fas fa-microchip text-2xl"></i>
+                    <div class="flex gap-2">
+                        <button id="add-plant-btn" onclick="openPlantModal()" class="flex items-center gap-2 px-4 py-3 bg-white border border-emerald-200 text-emerald-700 rounded-xl font-bold hover:bg-emerald-50 transition">
+                            <i class="fas fa-plus text-xs"></i> Add New Plant
+                        </button>
+                        <button id="submit-register-btn" onclick="submitDailyRegister()" class="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg transition">
+                            <i class="fas fa-check-double text-xs"></i> Submit Today
+                        </button>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">AI Diagnosis</h3>
-                    <p class="text-gray-500 leading-relaxed">Identify diseases and pests just by taking a photo of your plant's leaves. Our AI provides instant treatment steps.</p>
                 </div>
-                <div class="bg-white p-8 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-md transition">
-                    <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
-                        <i class="fas fa-trophy text-2xl"></i>
+                
+                <div class="glass-card rounded-[2rem] overflow-x-auto shadow-sm">
+                    <table class="w-full text-sm min-w-[700px]">
+                        <thead class="bg-emerald-100/50 text-emerald-700">
+                            <tr>
+                                <th class="p-5 text-left">Plant Identity</th>
+                                <th class="p-5">Today's Height (cm)</th>
+                                <th class="p-5">Total Leaves</th>
+                                <th class="p-5">Watered?</th>
+                                <th class="p-5">Share</th>
+                                <th class="p-5">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="register-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- STATS PAGE -->
+            <section id="page-stats" class="page-content hidden">
+                <h2 class="text-2xl font-black text-emerald-900 mb-6">Growth Statistics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" id="stats-grid"></div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6 rounded-[2rem]">
+                        <h3 class="font-bold mb-4 flex items-center justify-between">
+                            <span>Historical Growth Path</span>
+                            <select id="plant-select" class="bg-emerald-50 border border-emerald-100 rounded-lg text-xs p-2 focus:ring-2 focus:ring-emerald-500" onchange="renderStats()">
+                                <!-- Options by JS -->
+                            </select>
+                        </h3>
+                        <div class="h-64 flex items-end gap-2 px-4 border-b border-emerald-100" id="visual-bars"></div>
+                        <div class="flex justify-between text-[10px] text-gray-400 mt-2 px-4 font-bold uppercase tracking-widest">
+                            <span>Older</span>
+                            <span>Most Recent</span>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">Grow Quizzes</h3>
-                    <p class="text-gray-500 leading-relaxed">Compete with friends and earn botanical badges as you learn about rare species and professional care tips.</p>
+
+                    <div class="glass-card p-6 rounded-[2rem] flex flex-col justify-center text-center bg-gradient-to-br from-white to-emerald-50">
+                        <div class="text-5xl text-emerald-500 mb-4"><i class="fas fa-hand-holding-heart"></i></div>
+                        <h3 class="font-bold text-emerald-800 text-xl">Gardener's Insight</h3>
+                        <p class="text-sm text-emerald-600 mt-2 leading-relaxed" id="health-news">Log some data in the Register to receive expert tips.</p>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- DISCOVERY PAGE -->
+            <section id="page-discovery" class="page-content hidden">
+                <h2 class="text-2xl font-black text-emerald-900 mb-6">Species Encyclopedia</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-3xl border border-emerald-100 shadow-sm text-center group cursor-pointer">
+                        <div class="overflow-hidden rounded-2xl mb-3">
+                            <img src="https://images.unsplash.com/photo-1545241047-6083a3684587?w=300&h=300&fit=crop" class="group-hover:scale-110 transition duration-500">
+                        </div>
+                        <p class="font-bold text-sm text-emerald-900">Monstera Deliciosa</p>
+                        <p class="text-[10px] text-emerald-500 font-bold uppercase">Tropical</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-3xl border border-emerald-100 shadow-sm text-center group cursor-pointer">
+                        <div class="overflow-hidden rounded-2xl mb-3">
+                            <img src="https://images.unsplash.com/photo-1597055181300-e3633a207518?w=300&h=300&fit=crop" class="group-hover:scale-110 transition duration-500">
+                        </div>
+                        <p class="font-bold text-sm text-emerald-900">Snake Plant</p>
+                        <p class="text-[10px] text-emerald-500 font-bold uppercase">Drought Tolerant</p>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
+    <!-- Custom Modal: Add Plant -->
+    <div id="plant-modal" class="fixed inset-0 bg-emerald-950/40 backdrop-blur-sm z-[300] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl modal-enter overflow-hidden">
+            <div class="p-8">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="text-2xl font-black text-emerald-900 mb-2">New Garden Member</h3>
+                <p class="text-emerald-600 text-sm mb-6">Give your plant a name to start tracking its growth journey.</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-2 block">Plant Name</label>
+                        <input type="text" id="new-plant-name" placeholder="e.g. Fernie the Fern" class="w-full bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold">
+                    </div>
+                    <div class="flex gap-3 pt-4">
+                        <button onclick="closePlantModal()" class="flex-1 py-4 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-50 transition">Cancel</button>
+                        <button onclick="confirmAddPlant()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-700 transition">Add Plant</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900 text-white px-8 py-4 rounded-2xl shadow-2xl z-[200] hidden share-toast border border-emerald-700">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-lime-400"></i>
+            <span id="toast-msg" class="font-bold">Action successful!</span>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-[90] hidden md:hidden"></div>
+
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('hidden');
-        }
-    </script>
+        // --- State Management ---
+        let state = {
+            currentPage: 'home',
+            isPreview: false,
+            plants: JSON.parse(localStorage.getItem('pw_plants')) || [
+                { id: 1, name: 'Snake Plant', height: 45, leaves: 8, watered: true, history: [40, 42, 43, 44, 45] },
+                { id: 2, name: 'Peace Lily', height: 30, leaves: 12, watered: false, history: [25, 27, 28, 29, 30] }
+            ]
+        };
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        onAuthStateChanged(auth, (user) => {
-            const authLink = document.getElementById('auth-link');
-            const userProfile = document.getElementById('user-profile');
-            const userName = document.getElementById('user-name');
-
-            if (user) {
-                userProfile.classList.remove('hidden');
-                userName.innerText = user.email || 'Gardener';
-                authLink.innerHTML = '<i class="fas fa-sign-out-alt w-5"></i> <span>Logout</span>';
-                authLink.href = "#";
-                authLink.onclick = (e) => {
-                    e.preventDefault();
-                    signOut(auth);
-                };
-            } else {
-                userProfile.classList.add('hidden');
-                authLink.innerHTML = '<i class="fas fa-sign-in-alt w-5"></i> <span>Login</span>';
-                authLink.href = "login.html";
-                authLink.onclick = null;
+        function saveState() {
+            if (!state.isPreview) {
+                localStorage.setItem('pw_plants', JSON.stringify(state.plants));
+                localStorage.setItem('pw_last_page', state.currentPage);
             }
+        }
+
+        // --- Navigation ---
+        function navigate(pageId) {
+            state.currentPage = pageId;
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-500', 'text-white');
+                btn.classList.add('hover:bg-emerald-50');
+            });
+            const activeBtn = document.getElementById(`nav-${pageId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-emerald-500', 'text-white');
+                activeBtn.classList.remove('hover:bg-emerald-50');
+            }
+
+            if (pageId === 'register') renderRegister();
+            if (pageId === 'stats') renderStats();
+            if (pageId === 'home') {
+                updateChart();
+                updateDashboardStats();
+            }
+            
+            saveState();
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('active')) toggleSidebar();
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('hidden');
+        }
+
+        // --- Modal Control ---
+        function openPlantModal() {
+            if (state.isPreview) return;
+            document.getElementById('plant-modal').classList.remove('hidden');
+            document.getElementById('plant-modal').classList.add('flex');
+            document.getElementById('new-plant-name').focus();
+        }
+
+        function closePlantModal() {
+            document.getElementById('plant-modal').classList.add('hidden');
+            document.getElementById('plant-modal').classList.remove('flex');
+            document.getElementById('new-plant-name').value = '';
+        }
+
+        function confirmAddPlant() {
+            const input = document.getElementById('new-plant-name');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const newPlant = {
+                id: Date.now(),
+                name: name,
+                height: 0,
+                leaves: 0,
+                watered: false,
+                history: []
+            };
+
+            state.plants.push(newPlant);
+            saveState();
+            renderRegister();
+            closePlantModal();
+            showToast(`Added ${name} to garden!`);
+        }
+
+        // Handle Enter key in modal
+        document.getElementById('new-plant-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') confirmAddPlant();
         });
+
+        // --- Register Logic ---
+        function updatePlantLocal(id, field, value) {
+            const plant = state.plants.find(p => p.id == id);
+            if (!plant) return;
+            
+            if (field === 'height' || field === 'leaves') {
+                plant[field] = parseFloat(value) || 0;
+            } else if (field === 'watered') {
+                plant[field] = value;
+            }
+            saveState();
+        }
+
+        function submitDailyRegister() {
+            if (state.isPreview) return;
+            
+            state.plants.forEach(plant => {
+                if (!plant.history) plant.history = [];
+                // Push current value to history
+                plant.history.push(plant.height || 0);
+                if (plant.history.length > 30) plant.history.shift();
+                
+                // Clear daily inputs
+                plant.watered = false;
+                plant.height = 0; 
+                plant.leaves = 0;
+            });
+
+            saveState();
+            renderRegister();
+            showToast("Records saved! Fields reset for tomorrow.");
+            if (state.currentPage === 'home') updateChart();
+        }
+
+        function deletePlant(id) {
+            if (state.isPreview) return;
+            if (!confirm("Remove this plant? All history will be lost.")) return;
+            state.plants = state.plants.filter(p => p.id != id);
+            saveState();
+            renderRegister();
+        }
+
+        function generateShareLink(id) {
+            const plant = state.plants.find(p => p.id == id);
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = `${baseUrl}?preview=${id}&name=${encodeURIComponent(plant.name)}`;
+            
+            const el = document.createElement('textarea');
+            el.value = shareUrl;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            showToast(`Public link for ${plant.name} copied!`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        function renderRegister() {
+            const tbody = document.getElementById('register-body');
+            if (!tbody) return;
+
+            if (state.plants.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400">No plants in your garden yet. Add one above!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = state.plants.map(p => `
+                <tr class="border-b border-emerald-50 hover:bg-emerald-50/30 transition">
+                    <td class="p-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <span class="font-bold text-emerald-900">${p.name}</span>
+                        </div>
+                    </td>
+                    <td class="p-5">
+                        <div class="flex items-center gap-2">
+                            <input type="number" step="0.1" class="register-input max-w-[100px] font-mono" value="${p.height}" 
+                            ${state.isPreview ? 'disabled' : ''} oninput="updatePlantLocal(${p.id}, 'height', this.value)">
+                            <span class="text-xs text-gray-400">cm</span>
+                        </div>
+                    </td>
+                    <td class="p-5">
+                        <input type="number" class="register-input max-w-[100px] font-mono" value="${p.leaves}" 
+                        ${state.isPreview ? 'disabled' : ''} oninput="updatePlantLocal(${p.id}, 'leaves', this.value)">
+                    </td>
+                    <td class="p-5 text-center">
+                        <input type="checkbox" class="w-6 h-6 accent-emerald-600 cursor-pointer" ${p.watered ? 'checked' : ''} 
+                        ${state.isPreview ? 'disabled' : ''} onchange="updatePlantLocal(${p.id}, 'watered', this.checked)">
+                    </td>
+                    <td class="p-5 text-center">
+                        <button onclick="generateShareLink(${p.id})" class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition">
+                            <i class="fas fa-share-nodes"></i>
+                        </button>
+                    </td>
+                    <td class="p-5 text-center">
+                        ${state.isPreview ? '-' : `
+                        <button onclick="deletePlant(${p.id})" class="text-red-300 hover:text-red-500 p-2">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>`}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Charts & Stats ---
+        let chart;
+        function updateChart() {
+            const canvas = document.getElementById('growthChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: state.plants.map(p => p.name),
+                    datasets: [{
+                        label: 'Height (cm)',
+                        data: state.plants.map(p => p.height || (p.history && p.history.length > 0 ? p.history[p.history.length-1] : 0)),
+                        backgroundColor: '#10b981',
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function updateDashboardStats() {
+            const wateredCount = state.plants.filter(p => p.watered).length;
+            const status = document.getElementById('quick-status');
+            if (status) status.innerText = `${wateredCount} of ${state.plants.length} plants watered today.`;
+        }
+
+        function renderStats() {
+            const select = document.getElementById('plant-select');
+            if (!select) return;
+
+            const currentVal = select.value;
+            select.innerHTML = '';
+            state.plants.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = p.name;
+                if (p.id == currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            const activeId = select.value || (state.plants[0] ? state.plants[0].id : null);
+            const plant = state.plants.find(p => p.id == activeId);
+            
+            const grid = document.getElementById('stats-grid');
+            if (plant) {
+                grid.innerHTML = `
+                    <div class="bg-white p-6 rounded-3xl border border-emerald-100 shadow-sm">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Entry</p>
+                        <p class="text-3xl font-black text-emerald-600">${plant.height}cm</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-emerald-100 shadow-sm">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">History</p>
+                        <p class="text-3xl font-black text-emerald-600">${plant.history ? plant.history.length : 0}</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-emerald-100 shadow-sm">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</p>
+                        <p class="text-3xl font-black ${plant.watered ? 'text-emerald-600' : 'text-amber-500'}">${plant.watered ? 'Ok' : 'Wait'}</p>
+                    </div>
+                `;
+
+                const barContainer = document.getElementById('visual-bars');
+                barContainer.innerHTML = '';
+                const history = plant.history || [0];
+                const max = Math.max(...history, 10);
+                
+                history.forEach((h) => {
+                    const heightPct = (h / max) * 100;
+                    const bar = document.createElement('div');
+                    bar.className = "flex-1 bg-emerald-500 rounded-t-lg relative group transition-all duration-700 hover:bg-emerald-600";
+                    bar.style.height = `${Math.max(heightPct, 5)}%`;
+                    barContainer.appendChild(bar);
+                });
+            }
+        }
+
+        function checkUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const previewId = params.get('preview');
+            if (previewId) {
+                state.isPreview = true;
+                document.getElementById('preview-banner').classList.remove('hidden');
+                document.getElementById('add-plant-btn').classList.add('hidden');
+                document.getElementById('submit-register-btn').classList.add('hidden');
+                
+                const target = state.plants.find(p => p.id == previewId);
+                if (target) {
+                    state.plants = [target];
+                    document.getElementById('welcome-msg').innerText = `Public View: ${target.name}`;
+                }
+            }
+        }
+
+        function exitPreview() {
+            window.location.href = window.location.pathname;
+        }
+
+        function clearAllData() {
+            if (state.isPreview) return;
+            if (confirm("Reset everything?")) {
+                localStorage.removeItem('pw_plants');
+                location.reload();
+            }
+        }
+
+        window.onload = () => {
+            checkUrlParams();
+            const savedPage = localStorage.getItem('pw_last_page') || 'home';
+            navigate(savedPage);
+        };
     </script>
 </body>
 </html>
